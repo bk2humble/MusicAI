@@ -1,0 +1,1806 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head><base href="https://d16ilfvy4mv02r.cloudfront.net/workspaces/I8uG7YODEhcLr1wzTjkAZF1IYDkwcmqP/6e96a480-f38a-45df-b18e-9fbd19de147c/files/">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MusicAI — Your AI Music Coach</title>
+<style>
+  /* ===== CAPTCHA SCREEN ===== */
+  #captcha-screen{
+    position:fixed;inset:0;z-index:9999;
+    background:#0a0a0f;
+    display:flex;align-items:center;justify-content:center;
+    flex-direction:column;
+    font-family:'Segoe UI',system-ui,sans-serif;
+    transition:opacity .6s ease,visibility .6s ease;
+  }
+  #captcha-screen.hide{opacity:0;visibility:hidden;pointer-events:none;}
+
+  /* subtle bg orbs */
+  .cap-orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;}
+  .cap-orb1{width:520px;height:520px;background:rgba(124,58,237,.13);top:-140px;left:-160px;}
+  .cap-orb2{width:420px;height:420px;background:rgba(168,85,247,.09);bottom:-120px;right:-130px;}
+
+  /* center card */
+  .cap-card{
+    position:relative;z-index:1;
+    text-align:center;
+    animation:cap-drop .5s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes cap-drop{from{opacity:0;transform:translateY(-22px);}to{opacity:1;transform:translateY(0);}}
+
+  .cap-logo{
+    font-size:1.6rem;font-weight:900;
+    background:linear-gradient(135deg,#7c3aed,#a855f7,#c084fc);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    margin-bottom:32px;display:block;
+    letter-spacing:-.01em;
+  }
+
+  /* The reCAPTCHA-style widget box */
+  .recaptcha-widget{
+    background:#fff;
+    border:1px solid #d3d3d3;
+    border-radius:4px;
+    width:300px;
+    height:74px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 12px 0 14px;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+    margin:0 auto 0;
+    position:relative;
+    overflow:hidden;
+  }
+  /* spinning loader shown briefly on click */
+  .rc-spinner{
+    width:28px;height:28px;
+    border:3px solid #d0d0d0;
+    border-top-color:#4a90d9;
+    border-radius:50%;
+    animation:rc-spin .7s linear infinite;
+    display:none;
+    flex-shrink:0;
+  }
+  @keyframes rc-spin{to{transform:rotate(360deg);}}
+
+  /* custom styled checkbox */
+  .rc-check-wrap{
+    width:28px;height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  }
+  .rc-checkbox{
+    width:24px;height:24px;
+    border:2px solid #c1c1c1;
+    border-radius:2px;
+    background:#fff;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color .15s;
+    flex-shrink:0;
+  }
+  .rc-checkbox:hover{border-color:#4a90d9;}
+  .rc-checkbox.checked{
+    border-color:#1a73e8;
+    background:#fff;
+  }
+  /* animated checkmark via SVG */
+  .rc-checkmark{
+    width:15px;height:15px;
+    stroke:#1a73e8;
+    stroke-width:3;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    fill:none;
+    stroke-dasharray:22;
+    stroke-dashoffset:22;
+    transition:stroke-dashoffset .3s cubic-bezier(.4,0,.2,1) .05s;
+  }
+  .rc-checkbox.checked .rc-checkmark{stroke-dashoffset:0;}
+
+  .rc-label{
+    flex:1;
+    font-size:14px;
+    color:#202124;
+    font-family:Roboto,arial,sans-serif;
+    padding:0 10px;
+    text-align:left;
+    line-height:1.3;
+    user-select:none;
+    cursor:pointer;
+  }
+
+  /* right side branding (mimics reCAPTCHA right panel) */
+  .rc-brand{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    flex-shrink:0;
+  }
+  .rc-brand-logo{
+    width:32px;height:32px;
+  }
+  .rc-brand-text{
+    font-size:8px;
+    color:#555;
+    font-family:Roboto,arial,sans-serif;
+    line-height:1.3;
+    text-align:center;
+  }
+  .rc-brand-text a{color:#1a73e8;text-decoration:none;}
+
+  /* terms line under widget */
+  .rc-terms{
+    font-size:11px;
+    color:#777;
+    font-family:Roboto,arial,sans-serif;
+    margin-top:8px;
+    text-align:center;
+  }
+  .rc-terms a{color:#1a73e8;text-decoration:none;}
+
+  /* verified state — enter site button */
+  .cap-enter-btn{
+    margin-top:28px;
+    background:linear-gradient(135deg,#7c3aed,#a855f7,#c084fc);
+    color:#fff;border:none;
+    padding:13px 40px;
+    border-radius:12px;
+    font-size:.95rem;font-weight:700;
+    cursor:pointer;
+    box-shadow:0 4px 20px rgba(124,58,237,.4);
+    transition:.2s;
+    display:none;
+    animation:cap-drop .4s cubic-bezier(.22,1,.36,1) both;
+  }
+  .cap-enter-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,58,237,.55);}
+  .cap-enter-btn.show{display:inline-block;}
+
+  /* success tick overlay on widget */
+  .rc-success-overlay{
+    position:absolute;inset:0;
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    gap:10px;
+    opacity:0;pointer-events:none;
+    transition:opacity .3s;
+  }
+  .rc-success-overlay.show{opacity:1;}
+  .rc-success-tick{
+    width:28px;height:28px;
+    background:#1a73e8;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:16px;
+    font-weight:900;
+  }
+  .rc-success-text{
+    font-size:14px;color:#202124;
+    font-family:Roboto,arial,sans-serif;
+    font-weight:500;
+  }
+  /* ===== END CAPTCHA ===== */
+  :root{
+    --bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a27;--bg4:#22223a;
+    --accent:#7c3aed;--accent2:#a855f7;--accent3:#c084fc;
+    --gold:#f59e0b;--gold2:#fbbf24;
+    --green:#10b981;--red:#ef4444;--blue:#3b82f6;
+    --text:#f1f0ff;--muted:#9ca3af;--border:#2e2e4a;
+    --card:#161625;--card2:#1e1e30;
+    --grad:linear-gradient(135deg,#7c3aed,#a855f7,#c084fc);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden;}
+
+  /* NAV */
+  nav{position:fixed;top:0;width:100%;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px;}
+  .nav-logo{display:flex;align-items:center;gap:10px;font-size:1.4rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .nav-logo svg{width:32px;height:32px;}
+  .nav-links{display:flex;gap:24px;align-items:center;}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:.93rem;transition:.2s;cursor:pointer;}
+  .nav-links a:hover{color:var(--text);}
+  .nav-cta{background:var(--grad);border:none;color:#fff;padding:8px 20px;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;transition:.2s;}
+  .nav-cta:hover{opacity:.85;transform:translateY(-1px);}
+
+  /* HERO */
+  .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:80px 20px 60px;position:relative;overflow:hidden;}
+  .hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(124,58,237,.18),transparent),radial-gradient(ellipse 60% 40% at 80% 70%,rgba(168,85,247,.12),transparent);pointer-events:none;}
+  .hero-orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;}
+  .hero-orb1{width:500px;height:500px;background:rgba(124,58,237,.15);top:-100px;left:-150px;}
+  .hero-orb2{width:400px;height:400px;background:rgba(168,85,247,.12);bottom:-80px;right:-100px;}
+  .hero-content{position:relative;z-index:1;max-width:860px;}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);border-radius:40px;padding:6px 16px;font-size:.82rem;font-weight:600;color:var(--accent3);margin-bottom:28px;}
+  .hero-badge::before{content:'✦';font-size:.8rem;}
+  h1.hero-title{font-size:clamp(2.4rem,6vw,4.2rem);font-weight:900;line-height:1.1;margin-bottom:24px;}
+  .hero-title .grad{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .hero-sub{font-size:1.15rem;color:var(--muted);max-width:620px;margin:0 auto 40px;line-height:1.7;}
+  .hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+  .btn-primary{background:var(--grad);color:#fff;border:none;padding:14px 32px;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s;box-shadow:0 4px 24px rgba(124,58,237,.35);}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(124,58,237,.5);}
+  .btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border);padding:14px 32px;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;transition:.2s;}
+  .btn-outline:hover{border-color:var(--accent2);color:var(--accent3);}
+  .hero-stats{display:flex;gap:40px;justify-content:center;margin-top:60px;flex-wrap:wrap;}
+  .hero-stat .num{font-size:1.8rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .hero-stat .lbl{font-size:.82rem;color:var(--muted);margin-top:2px;}
+
+  /* SECTION */
+  section{padding:80px 20px;}
+  .section-inner{max-width:1100px;margin:0 auto;}
+  .section-label{text-align:center;font-size:.82rem;font-weight:700;letter-spacing:.12em;color:var(--accent2);text-transform:uppercase;margin-bottom:12px;}
+  .section-title{text-align:center;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:16px;}
+  .section-sub{text-align:center;color:var(--muted);font-size:1rem;max-width:560px;margin:0 auto 56px;line-height:1.7;}
+
+  /* UPLOAD */
+  .upload-area{border:2px dashed var(--border);border-radius:20px;padding:60px 40px;text-align:center;background:var(--card);transition:.3s;cursor:pointer;position:relative;overflow:hidden;}
+  .upload-area:hover,.upload-area.drag{border-color:var(--accent2);background:rgba(124,58,237,.06);}
+  .upload-icon{font-size:3.5rem;margin-bottom:16px;display:block;}
+  .upload-title{font-size:1.25rem;font-weight:700;margin-bottom:8px;}
+  .upload-sub{color:var(--muted);font-size:.9rem;margin-bottom:24px;}
+  .upload-types{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .upload-type-badge{background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:.78rem;color:var(--muted);}
+  #fileInput{display:none;}
+
+  /* PROGRESS BAR ANALYSIS */
+  .analysis-panel{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;margin-top:24px;display:none;}
+  .analysis-panel.visible{display:block;}
+  .analysis-step{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border);}
+  .analysis-step:last-child{border-bottom:none;}
+  .step-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+  .step-icon.done{background:rgba(16,185,129,.2);color:var(--green);}
+  .step-icon.active{background:rgba(124,58,237,.2);color:var(--accent2);animation:pulse 1.2s infinite;}
+  .step-icon.wait{background:var(--bg4);color:var(--muted);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .step-text .title{font-weight:600;font-size:.92rem;}
+  .step-text .sub{font-size:.8rem;color:var(--muted);margin-top:2px;}
+  .progress-bar-wrap{background:var(--bg4);border-radius:99px;height:6px;margin-top:8px;overflow:hidden;}
+  .progress-bar-fill{height:100%;border-radius:99px;background:var(--grad);transition:width 1.2s ease;}
+
+  /* FEEDBACK PANEL */
+  .feedback-panel{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;margin-top:24px;display:none;}
+  .feedback-panel.visible{display:block;}
+  .feedback-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;}
+  .ai-avatar{width:48px;height:48px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+  .feedback-meta h3{font-weight:700;font-size:1.05rem;}
+  .feedback-meta p{color:var(--muted);font-size:.82rem;}
+  .score-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px;}
+  .score-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+  .score-card .score-num{font-size:2rem;font-weight:800;}
+  .score-card .score-lbl{font-size:.78rem;color:var(--muted);margin-top:4px;}
+  .score-card.green .score-num{color:var(--green);}
+  .score-card.yellow .score-num{color:var(--gold);}
+  .score-card.blue .score-num{color:var(--blue);}
+  .score-card.purple .score-num{color:var(--accent2);}
+  .feedback-section{margin-bottom:20px;}
+  .feedback-section h4{font-size:.9rem;font-weight:700;color:var(--accent3);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .feedback-item{background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:12px 16px;margin-bottom:8px;font-size:.9rem;line-height:1.6;color:var(--text);}
+  .feedback-item.green{border-left-color:var(--green);}
+  .feedback-item.gold{border-left-color:var(--gold);}
+  .feedback-item.blue{border-left-color:var(--blue);}
+  .rec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px;}
+  .rec-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:flex-start;}
+  .rec-icon{font-size:1.5rem;flex-shrink:0;}
+  .rec-text h5{font-size:.85rem;font-weight:700;margin-bottom:4px;}
+  .rec-text p{font-size:.78rem;color:var(--muted);line-height:1.5;}
+
+  /* CONTEXT FORM */
+  .context-form{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;margin-top:24px;}
+  .context-form h3{font-size:1.1rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;}
+  .form-group label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
+  .form-group input,.form-group select,.form-group textarea{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:.92rem;outline:none;transition:.2s;font-family:inherit;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent2);}
+  .form-group textarea{resize:vertical;min-height:90px;}
+  .form-group select option{background:var(--bg2);}
+  .tag-input-wrap{display:flex;flex-wrap:wrap;gap:6px;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;min-height:44px;cursor:text;}
+  .tag-input-wrap:focus-within{border-color:var(--accent2);}
+  .tag{background:rgba(124,58,237,.25);border:1px solid rgba(124,58,237,.4);border-radius:5px;padding:2px 8px;font-size:.8rem;color:var(--accent3);display:flex;align-items:center;gap:4px;}
+  .tag span{cursor:pointer;opacity:.7;}
+  .tag-input-wrap input{border:none;background:transparent;outline:none;color:var(--text);font-size:.88rem;flex:1;min-width:80px;}
+
+  /* FEATURES */
+  .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
+  .feature-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;transition:.3s;position:relative;overflow:hidden;}
+  .feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad);}
+  .feature-card:hover{transform:translateY(-3px);border-color:rgba(124,58,237,.4);}
+  .feature-icon{font-size:2.2rem;margin-bottom:14px;display:block;}
+  .feature-card h3{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+  .feature-card p{color:var(--muted);font-size:.88rem;line-height:1.65;}
+
+  /* PRICING */
+  .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;align-items:start;}
+  .plan-card{background:var(--card);border:1.5px solid var(--border);border-radius:22px;padding:32px;transition:.3s;position:relative;overflow:hidden;}
+  .plan-card.featured{border-color:var(--accent2);background:linear-gradient(180deg,rgba(124,58,237,.08),var(--card));}
+  .plan-card.featured::before{content:'Most Popular';position:absolute;top:16px;right:16px;background:var(--grad);color:#fff;font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:40px;}
+  .plan-card.gold-plan{border-color:rgba(245,158,11,.4);background:linear-gradient(180deg,rgba(245,158,11,.06),var(--card));}
+  .plan-badge{display:inline-flex;align-items:center;gap:6px;border-radius:6px;padding:4px 10px;font-size:.75rem;font-weight:700;margin-bottom:16px;}
+  .plan-badge.free{background:rgba(16,185,129,.15);color:var(--green);}
+  .plan-badge.beginner{background:rgba(59,130,246,.15);color:var(--blue);}
+  .plan-badge.intermediate{background:rgba(124,58,237,.15);color:var(--accent2);}
+  .plan-badge.master{background:rgba(245,158,11,.15);color:var(--gold2);}
+  .plan-name{font-size:1.3rem;font-weight:800;margin-bottom:8px;}
+  .plan-price{font-size:2.5rem;font-weight:900;margin:12px 0 4px;}
+  .plan-price span{font-size:1rem;font-weight:500;color:var(--muted);}
+  .plan-period{font-size:.82rem;color:var(--muted);margin-bottom:6px;}
+  .trial-badge{display:inline-block;background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);border-radius:6px;padding:3px 10px;font-size:.75rem;font-weight:700;margin-bottom:20px;}
+  .plan-divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+  .plan-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+  .plan-features li{display:flex;align-items:flex-start;gap:10px;font-size:.87rem;line-height:1.5;}
+  .plan-features li .check{flex-shrink:0;margin-top:1px;}
+  .plan-features li .check.yes{color:var(--green);}
+  .plan-features li .check.no{color:var(--border);}
+  .plan-btn{width:100%;padding:13px;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer;border:none;transition:.2s;}
+  .plan-btn.grad{background:var(--grad);color:#fff;box-shadow:0 4px 16px rgba(124,58,237,.3);}
+  .plan-btn.grad:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,58,237,.45);}
+  .plan-btn.outline{background:transparent;color:var(--text);border:1.5px solid var(--border);}
+  .plan-btn.outline:hover{border-color:var(--accent2);color:var(--accent2);}
+  .plan-btn.gold{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#000;box-shadow:0 4px 16px rgba(245,158,11,.3);}
+  .plan-btn.gold:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,158,11,.45);}
+
+  /* COLLAB */
+  .collab-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;}
+  .collab-members{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;}
+  .member-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;border:2px solid var(--border);}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:.25s;}
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:24px;padding:40px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;transform:scale(.95);transition:.25s;}
+  .modal-overlay.open .modal{transform:scale(1);}
+  .modal-close{position:absolute;top:16px;right:20px;background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;}
+  .modal h2{font-size:1.5rem;font-weight:800;margin-bottom:8px;}
+  .modal p.sub{color:var(--muted);font-size:.9rem;margin-bottom:24px;}
+  .connect-options{display:flex;flex-direction:column;gap:12px;}
+  .connect-option{display:flex;align-items:center;gap:14px;background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:14px 18px;cursor:pointer;transition:.2s;}
+  .connect-option:hover{border-color:var(--accent2);}
+  .connect-option .opt-icon{font-size:1.6rem;}
+  .connect-option .opt-text h4{font-size:.9rem;font-weight:700;}
+  .connect-option .opt-text p{font-size:.78rem;color:var(--muted);}
+  .connect-option .connect-btn-sm{margin-left:auto;background:var(--grad);color:#fff;border:none;padding:6px 14px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .connect-option .connected-badge{margin-left:auto;background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);border-radius:6px;padding:4px 10px;font-size:.75rem;font-weight:700;}
+
+  /* INDUSTRY PANEL */
+  .industry-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
+  .industry-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;text-align:center;transition:.3s;}
+  .industry-card:hover{border-color:var(--accent2);transform:translateY(-2px);}
+  .industry-card .ind-icon{font-size:2.5rem;margin-bottom:10px;}
+  .industry-card h4{font-size:.9rem;font-weight:700;margin-bottom:6px;}
+  .industry-card p{font-size:.78rem;color:var(--muted);line-height:1.5;}
+
+  /* COPYRIGHT */
+  .copyright-form{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;}
+  .copyright-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px;}
+  .cp-step{background:var(--bg3);border-radius:12px;padding:16px;text-align:center;}
+  .cp-step .step-num{font-size:1.5rem;font-weight:900;color:var(--accent2);margin-bottom:6px;}
+  .cp-step h4{font-size:.85rem;font-weight:700;margin-bottom:4px;}
+  .cp-step p{font-size:.77rem;color:var(--muted);}
+
+  /* TABS */
+  .tabs-nav{display:flex;gap:0;background:var(--bg3);border-radius:12px;padding:4px;margin-bottom:28px;overflow-x:auto;}
+  .tab-btn{flex:1;padding:10px 18px;background:transparent;border:none;color:var(--muted);border-radius:9px;cursor:pointer;font-size:.88rem;font-weight:600;transition:.2s;white-space:nowrap;}
+  .tab-btn.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+
+  /* FOOTER */
+  footer{background:var(--bg2);border-top:1px solid var(--border);padding:60px 20px 30px;}
+  .footer-inner{max-width:1100px;margin:0 auto;}
+  .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px;}
+  @media(max-width:768px){.footer-top{grid-template-columns:1fr 1fr;}}
+  .footer-logo{font-size:1.3rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px;}
+  .footer-desc{color:var(--muted);font-size:.87rem;line-height:1.7;margin-bottom:20px;}
+  .footer-col h4{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:14px;}
+  .footer-col a{display:block;color:var(--muted);font-size:.84rem;text-decoration:none;margin-bottom:8px;transition:.2s;cursor:pointer;}
+  .footer-col a:hover{color:var(--accent3);}
+  .footer-bottom{border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:gap;gap:16px;}
+  .footer-bottom p{color:var(--muted);font-size:.8rem;}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:12px;z-index:2000;transform:translateY(80px);opacity:0;transition:.35s;font-size:.88rem;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast-icon{font-size:1.2rem;}
+
+  /* SCROLL ANIMATION */
+  .fade-in{opacity:0;transform:translateY(24px);transition:.6s ease;}
+  .fade-in.visible{opacity:1;transform:translateY(0);}
+
+  /* WAVEFORM ANIM */
+  .waveform{display:flex;align-items:center;gap:3px;height:32px;margin:16px auto;width:fit-content;}
+  .wave-bar{width:4px;border-radius:3px;background:var(--accent2);animation:wave 1.2s ease-in-out infinite;}
+  .wave-bar:nth-child(1){height:10px;animation-delay:0s;}
+  .wave-bar:nth-child(2){height:22px;animation-delay:.1s;}
+  .wave-bar:nth-child(3){height:16px;animation-delay:.2s;}
+  .wave-bar:nth-child(4){height:28px;animation-delay:.3s;}
+  .wave-bar:nth-child(5){height:18px;animation-delay:.4s;}
+  .wave-bar:nth-child(6){height:24px;animation-delay:.5s;}
+  .wave-bar:nth-child(7){height:14px;animation-delay:.4s;}
+  .wave-bar:nth-child(8){height:20px;animation-delay:.3s;}
+  .wave-bar:nth-child(9){height:12px;animation-delay:.2s;}
+  @keyframes wave{0%,100%{transform:scaleY(.4);opacity:.5;}50%{transform:scaleY(1);opacity:1;}}
+
+  @media(max-width:640px){
+    nav{padding:0 16px;}
+    .nav-links{gap:12px;}
+    .hero-stats{gap:24px;}
+    .plan-card{padding:24px;}
+  }
+
+  /* Upgrade lock */
+  .locked-feature{position:relative;filter:blur(2px);pointer-events:none;user-select:none;}
+  .upgrade-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,15,.75);backdrop-filter:blur(4px);border-radius:18px;z-index:10;gap:10px;}
+  .upgrade-overlay .lock-icon{font-size:2rem;}
+  .upgrade-overlay p{font-size:.88rem;color:var(--muted);}
+
+  /* Inline label chips */
+  .chip{display:inline-flex;align-items:center;gap:4px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);border-radius:5px;padding:2px 8px;font-size:.75rem;color:var(--accent3);font-weight:600;}
+
+  .green-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 6px var(--green);}
+
+  /* ===== REGION STYLES ===== */
+  .region-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);
+    border-radius:40px;padding:4px 12px;
+    font-size:.78rem;font-weight:600;color:#60a5fa;
+    cursor:default;transition:.2s;
+  }
+  .region-pill:hover{background:rgba(59,130,246,.2);}
+  .region-flag{font-size:1rem;line-height:1;}
+
+  /* region banner under nav */
+  .region-banner{
+    position:fixed;top:64px;left:0;right:0;z-index:99;
+    background:linear-gradient(90deg,rgba(59,130,246,.18),rgba(124,58,237,.18));
+    border-bottom:1px solid rgba(59,130,246,.25);
+    padding:7px 32px;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    font-size:.82rem;color:#93c5fd;
+    transform:translateY(-100%);opacity:0;
+    transition:.5s cubic-bezier(.22,1,.36,1);
+  }
+  .region-banner.show{transform:translateY(0);opacity:1;}
+  .region-banner strong{color:#f1f0ff;}
+  .region-banner .rb-chip{
+    background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.35);
+    border-radius:5px;padding:2px 8px;font-size:.74rem;font-weight:700;color:#60a5fa;
+  }
+
+  /* regional insight card in feedback */
+  .region-insight-box{
+    background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(124,58,237,.08));
+    border:1px solid rgba(59,130,246,.25);
+    border-radius:16px;padding:20px 22px;margin-bottom:12px;
+  }
+  .region-insight-box h5{
+    font-size:.88rem;font-weight:700;color:#60a5fa;
+    display:flex;align-items:center;gap:8px;margin-bottom:10px;
+  }
+  .region-insight-box ul{
+    list-style:none;display:flex;flex-direction:column;gap:7px;
+  }
+  .region-insight-box ul li{
+    font-size:.85rem;line-height:1.55;color:var(--text);
+    display:flex;align-items:flex-start;gap:8px;
+  }
+  .region-insight-box ul li::before{content:'▸';color:#60a5fa;flex-shrink:0;margin-top:1px;}
+
+  /* plan card region badge */
+  .plan-region-row{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);
+    border-radius:10px;padding:10px 14px;margin-bottom:14px;
+    font-size:.82rem;color:#93c5fd;
+  }
+  .plan-region-row .prf{font-size:1.1rem;}
+  .plan-region-row strong{color:#f1f0ff;}
+  /* ===== END REGION STYLES ===== */
+</style>
+</head>
+<body>
+<!-- ===== CAPTCHA SCREEN ===== -->
+<div id="captcha-screen">
+  <div class="cap-orb cap-orb1"></div>
+  <div class="cap-orb cap-orb2"></div>
+  <div class="cap-card">
+    <span class="cap-logo">🎵 MusicAI</span>
+
+    <!-- reCAPTCHA-style widget -->
+    <div class="recaptcha-widget" id="rcWidget">
+
+      <!-- Checkbox area -->
+      <div class="rc-check-wrap">
+        <div class="rc-checkbox" id="rcBox" onclick="rcClick()">
+          <svg viewBox="0 0 16 16" class="rc-checkmark" id="rcTick">
+            <polyline points="2,8 6,12 14,4"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Spinner (shown while "verifying") -->
+      <div class="rc-spinner" id="rcSpinner"></div>
+
+      <!-- Label -->
+      <label class="rc-label" for="rcBox" onclick="rcClick()" style="cursor:pointer;">I'm not a robot</label>
+
+      <!-- reCAPTCHA branding -->
+      <div class="rc-brand">
+        <svg class="rc-brand-logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#4285F4"/>
+              <stop offset="100%" stop-color="#34A853"/>
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="32" r="30" fill="url(#rg1)" opacity=".15"/>
+          <path d="M32 10 C20 10 11 19 11 31 C11 37 13.5 42.5 17.5 46.5 L22 42 C19.2 39.2 17.5 35.3 17.5 31 C17.5 22.7 24 16 32 16 C36 16 39.6 17.6 42.2 20.2 L46.5 15.9 C43 12.4 37.8 10 32 10Z" fill="#4285F4"/>
+          <path d="M32 48 C27.7 48 23.8 46.3 21 43.5 L16.5 47.8 C20.5 51.8 26 54 32 54 C44 54 53 45 53 33 L47 33 C47 41.3 40.3 48 32 48Z" fill="#34A853"/>
+          <path d="M53 31 L32 31 L32 37 L46.5 37 C45.3 41.5 41.5 44.9 37 46.6 L39.4 52 C46.7 49.3 53 42 53 31Z" fill="#FBBC05"/>
+          <circle cx="32" cy="32" r="6" fill="#EA4335"/>
+        </svg>
+        <span class="rc-brand-text">reCAPTCHA<br/><a href="#">Privacy</a> - <a href="#">Terms</a></span>
+      </div>
+
+      <!-- verified overlay -->  
+      <div class="rc-success-overlay" id="rcSuccessOverlay">
+        <div class="rc-success-tick">✓</div>
+        <span class="rc-success-text">Verified</span>
+      </div>
+    </div>
+    <div class="rc-terms">Protected by reCAPTCHA · <a href="#">Privacy</a> · <a href="#">Terms</a></div>
+
+    <!-- Enter site button appears after check -->
+    <button class="cap-enter-btn" id="capEnterBtn" onclick="enterSite()">Enter MusicAI →</button>
+  </div>
+</div>
+<!-- ===== END CAPTCHA ===== -->
+
+<!-- REGION BANNER -->
+<div class="region-banner" id="regionBanner">
+  <span class="region-flag" id="bannerFlag">🌍</span>
+  <span>Region detected: <strong id="bannerRegionName">—</strong></span>
+  <span class="rb-chip" id="bannerChip">Intermediate AI</span>
+  <span>is tailoring music industry insights specifically for your market.</span>
+</div>
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#c084fc"/></linearGradient></defs>
+      <circle cx="16" cy="16" r="15" fill="url(#lg)" opacity=".2"/>
+      <path d="M10 22V12l14-3v10" stroke="url(#lg)" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="8" cy="22" r="3" fill="url(#lg)"/>
+      <circle cx="22" cy="19" r="3" fill="url(#lg)"/>
+    </svg>
+    MusicAI
+  </div>
+  <div class="nav-links">
+    <a onclick="scrollTo('features')">Features</a>
+    <a onclick="scrollTo('upload')">Upload</a>
+    <a onclick="scrollTo('pricing')">Pricing</a>
+    <a onclick="scrollTo('industry')">Industry</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="region-pill" id="navRegionPill" title="Your detected region">
+      <span class="region-flag" id="navFlag">🌍</span>
+      <span id="navRegionText">Detecting...</span>
+    </div>
+    <button class="nav-cta" onclick="openModal('signup')">Get Started Free</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-orb hero-orb1"></div>
+  <div class="hero-orb hero-orb2"></div>
+  <div class="hero-content">
+    <div class="hero-badge">✦ AI-Powered Music Coaching Platform</div>
+    <h1 class="hero-title">Make Music That <span class="grad">Hits Different</span><br/>with AI Feedback</h1>
+    <p class="hero-sub">Upload your beats, tracks, and music videos. Get instant, detailed AI feedback on how to improve — with specific loop, instrument, and structure recommendations tailored to your sound.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="scrollTo('upload')">🎵 Upload Your Track</button>
+      <button class="btn-outline" onclick="scrollTo('pricing')">View Plans</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">50K+</div><div class="lbl">Artists Coached</div></div>
+      <div class="hero-stat"><div class="num">2.4M+</div><div class="lbl">Tracks Analyzed</div></div>
+      <div class="hero-stat"><div class="num">98%</div><div class="lbl">Satisfaction Rate</div></div>
+      <div class="hero-stat"><div class="num">40+</div><div class="lbl">DAWs Supported</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-inner">
+    <p class="section-label">What MusicAI Does</p>
+    <h2 class="section-title">Every Tool an Artist Needs</h2>
+    <p class="section-sub">From beginner bedroom producers to professionals — MusicAI adapts to your journey and gives you an edge at every stage.</p>
+    <div class="features-grid fade-in">
+      <div class="feature-card">
+        <span class="feature-icon">🎙️</span>
+        <h3>Multi-Format Upload</h3>
+        <p>Upload MP3, WAV, FLAC, AAC, OGG, or full music videos (MP4, MKV, MOV). AI extracts and analyzes the audio from any format automatically.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🤖</span>
+        <h3>Intelligent AI Feedback</h3>
+        <p>Get deep, actionable feedback on melody, rhythm, mixing, arrangement, energy flow, and vocal performance — not just surface-level tips.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🎛️</span>
+        <h3>Loop & Instrument Recs</h3>
+        <p>AI recommends specific loops, drum patterns, synth layers, and instruments that fit your track's key, BPM, and genre to elevate your sound.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🎯</span>
+        <h3>Audience & Purpose Analysis</h3>
+        <p>Tell AI your target audience, the deeper meaning of your song, and its purpose — receive coaching aligned to emotional impact and marketability.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔗</span>
+        <h3>DAW & App Integration</h3>
+        <p>Connect Ableton, FL Studio, GarageBand, Logic Pro, BeatStars, and more — AI knows exactly what's available in your toolkit.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">©️</span>
+        <h3>Copyright & Patent Tools</h3>
+        <p>Protect your work with guided copyright registration, fingerprinting for originality checks, and AI-generated documentation for IP protection.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">👥</span>
+        <h3>Artist Collabs & Groups</h3>
+        <p>Create collab rooms, invite artists, combine projects, share feedback sessions, and build your crew — all within MusicAI.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🌍</span>
+        <h3>Music Industry Mastery</h3>
+        <p>Get step-by-step guidance on publishing to Spotify, SoundCloud, Apple Music, YouTube Music, and SoundTrap — built by industry insiders.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🚀</span>
+        <h3>Artist Growth Roadmap</h3>
+        <p>AI builds a personalized, milestone-based roadmap to help you grow your fanbase, land playlists, and establish yourself as a professional artist.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- UPLOAD SECTION -->
+<section id="upload" style="background:var(--bg2);">
+  <div class="section-inner">
+    <p class="section-label">Start Here</p>
+    <h2 class="section-title">Upload Your Track</h2>
+    <p class="section-sub">Drop your music file or video and let the AI go to work. Free forever, no credit card required.</p>
+
+    <!-- Context Form -->
+    <div class="context-form fade-in">
+      <h3>🎯 Tell the AI About Your Track <span class="chip">Optional but Powerful</span></h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Genre</label>
+          <select id="genreSelect">
+            <option value="">Select genre...</option>
+            <option>Hip-Hop / Trap</option>
+            <option>R&B / Soul</option>
+            <option>Pop</option>
+            <option>Electronic / EDM</option>
+            <option>Afrobeats</option>
+            <option>Lo-fi</option>
+            <option>Drill</option>
+            <option>Dancehall</option>
+            <option>Jazz</option>
+            <option>Rock</option>
+            <option>Country</option>
+            <option>Reggaeton</option>
+            <option>Gospel</option>
+            <option>Classical</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Target Audience</label>
+          <input type="text" id="audienceInput" placeholder="e.g. Young adults 18–25 going through heartbreak..."/>
+        </div>
+        <div class="form-group">
+          <label>Deeper Meaning / Purpose</label>
+          <textarea id="meaningInput" placeholder="What do you want listeners to feel or understand beyond the surface lyrics? What is this song's mission?"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Mood & Energy</label>
+          <div class="tag-input-wrap" id="moodTagWrap">
+            <input type="text" id="moodInput" placeholder="e.g. Melancholic, triumphant... (press Enter)" onkeydown="addTag(event)"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>What Aspect to Focus On?</label>
+          <select id="focusSelect">
+            <option value="">Focus on everything...</option>
+            <option>Melody & Harmony</option>
+            <option>Drum Programming & Rhythm</option>
+            <option>Mixing & Mastering</option>
+            <option>Song Structure & Arrangement</option>
+            <option>Vocal Performance</option>
+            <option>Lyric Writing</option>
+            <option>Bass Lines</option>
+            <option>Overall Commercial Appeal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Your Goal With This Song</label>
+          <select id="goalSelect">
+            <option>Get playlist placement</option>
+            <option>Viral on social media</option>
+            <option>Showcase to label</option>
+            <option>Personal artistic expression</option>
+            <option>Background / sync licensing</option>
+            <option>Build fan connection</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Area -->
+    <div class="upload-area fade-in" id="uploadArea" onclick="document.getElementById('fileInput').click()" ondragover="handleDrag(event)" ondrop="handleDrop(event)">
+      <span class="upload-icon">🎵</span>
+      <div class="upload-title">Drop your music file or video here</div>
+      <div class="upload-sub">or click to browse your files</div>
+      <div class="upload-types">
+        <span class="upload-type-badge">MP3</span>
+        <span class="upload-type-badge">WAV</span>
+        <span class="upload-type-badge">FLAC</span>
+        <span class="upload-type-badge">AAC</span>
+        <span class="upload-type-badge">OGG</span>
+        <span class="upload-type-badge">MP4</span>
+        <span class="upload-type-badge">MKV</span>
+        <span class="upload-type-badge">MOV</span>
+      </div>
+      <input type="file" id="fileInput" accept="audio/*,video/*" onchange="handleFile(event)"/>
+    </div>
+
+    <!-- Analysis Panel -->
+    <div class="analysis-panel" id="analysisPanel">
+      <h3 style="margin-bottom:20px;font-size:1.05rem;font-weight:700;">🔍 AI is Analyzing Your Track...</h3>
+      <div class="waveform">
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      </div>
+      <div class="analysis-step">
+        <div class="step-icon active" id="icon0">⚡</div>
+        <div class="step-text">
+          <div class="title">Audio Extraction & Preprocessing</div>
+          <div class="sub">Converting format, normalizing audio levels, extracting waveform data...</div>
+        </div>
+      </div>
+      <div class="analysis-step">
+        <div class="step-icon wait" id="icon1">🎼</div>
+        <div class="step-text">
+          <div class="title">Detecting Key, BPM & Structure</div>
+          <div class="sub">Identifying musical key, tempo, intro/verse/chorus/bridge sections...</div>
+        </div>
+      </div>
+      <div class="analysis-step">
+        <div class="step-icon wait" id="icon2">🎛️</div>
+        <div class="step-text">
+          <div class="title">Frequency & Mix Analysis</div>
+          <div class="sub">Analyzing EQ balance, stereo width, compression, low-end clarity...</div>
+        </div>
+      </div>
+      <div class="analysis-step">
+        <div class="step-icon wait" id="icon3">🤖</div>
+        <div class="step-text">
+          <div class="title">AI Generating Personalized Feedback</div>
+          <div class="sub" id="analysisRegionSub">Cross-referencing genre benchmarks, compiling recommendations...</div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap" style="margin-top:16px;">
+        <div class="progress-bar-fill" id="analysisProgress" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Feedback Panel -->
+    <div class="feedback-panel" id="feedbackPanel">
+      <div class="feedback-header">
+        <div class="ai-avatar">🤖</div>
+        <div class="feedback-meta">
+          <h3>MusicAI Feedback Report</h3>
+          <p>Analyzed: <span id="fileName">track.mp3</span> &nbsp;•&nbsp; <span class="green-dot"></span>&nbsp; Analysis Complete</p>
+        </div>
+      </div>
+
+      <div class="score-row">
+        <div class="score-card green"><div class="score-num">82</div><div class="score-lbl">Overall Score</div></div>
+        <div class="score-card yellow"><div class="score-num">74</div><div class="score-lbl">Mix Quality</div></div>
+        <div class="score-card blue"><div class="score-num">88</div><div class="score-lbl">Arrangement</div></div>
+        <div class="score-card purple"><div class="score-num">90</div><div class="score-lbl">Energy Flow</div></div>
+      </div>
+
+      <div class="feedback-section">
+        <h4>✅ What's Working Well</h4>
+        <div class="feedback-item green">Your drum pattern has excellent pocket and groove. The snare placement on beat 2 and 4 creates a natural head-nod feel that suits the genre perfectly.</div>
+        <div class="feedback-item green">The chord progression has a strong emotional identity — the minor 6th movement in the chorus creates tension that resolves beautifully. Keep this.</div>
+        <div class="feedback-item green">Your vocal delivery in the hook has authentic emotion. The slight pitch wavering on held notes gives it a raw, relatable quality.</div>
+      </div>
+
+      <div class="feedback-section">
+        <h4>⚡ Areas to Improve</h4>
+        <div class="feedback-item">Your low-end is muddy between 60–120Hz. There's frequency clash between the kick drum and bass guitar. Apply a high-pass filter on the bass at 80Hz and add a 3–4 dB cut on the kick around 100Hz to create separation.</div>
+        <div class="feedback-item gold">The verse feels too long relative to the chorus — currently 32 bars vs 8 bars in the hook. Consider trimming the 2nd verse by 8 bars or adding a pre-chorus to build anticipation.</div>
+        <div class="feedback-item">The hi-hat pattern becomes monotonous in the second half. Introduce open hi-hats on the "and" of beat 2 every 4 bars and add subtle ghost notes to create texture without overwhelming the groove.</div>
+      </div>
+
+      <div class="feedback-section">
+        <h4>🎛️ Recommended Loops & Instruments</h4>
+        <div class="rec-grid">
+          <div class="rec-card">
+            <span class="rec-icon">🥁</span>
+            <div class="rec-text">
+              <h5>808 Sub Bass Layer</h5>
+              <p>Add a pitched 808 underneath your bass for sub-frequency power. Tune to the root note of each chord. Recommended: Splice "Dark 808 Pack" or KSHMR 808s.</p>
+            </div>
+          </div>
+          <div class="rec-card">
+            <span class="rec-icon">🎹</span>
+            <div class="rec-text">
+              <h5>Rhodes Electric Piano</h5>
+              <p>A soft Rhodes chord stab on the "and" of beat 3 would fill the mid-frequency gap in your arrangement. Use Keyscape or a free Kontakt Rhodes patch.</p>
+            </div>
+          </div>
+          <div class="rec-card">
+            <span class="rec-icon">🎺</span>
+            <div class="rec-text">
+              <h5>Brass Section Accent</h5>
+              <p>A short brass stab at the end of your chorus phrase would add commercial punch. Try Heavyocity Forzo or a free Spitfire LABS brass patch.</p>
+            </div>
+          </div>
+          <div class="rec-card">
+            <span class="rec-icon">🎸</span>
+            <div class="rec-text">
+              <h5>Finger-Picked Guitar Loop</h5>
+              <p>Layer a subtle acoustic guitar loop at –12 dB underneath your beat to add organic warmth and depth. BPM-synced to your track (current: 94 BPM).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feedback-section">
+        <h4>🎯 Artist Growth Tips</h4>
+        <div class="feedback-item blue">Based on your genre and emotional palette, your ideal audience responds strongly to storytelling. Consider adding a spoken-word bridge that deepens the narrative — artists like JID and Noname use this effectively to build cult fanbases.</div>
+        <div class="feedback-item blue">Your track's BPM and energy align well with workout/motivational playlist curators on Spotify. Pitch to "Workout Beats" and "Power Hour" editorial playlists after releasing — submit via Spotify for Artists at least 7 days before release.</div>
+      </div>
+
+      <!-- REGIONAL AI INSIGHTS (Intermediate) -->
+      <div class="feedback-section" id="regionInsightSection" style="display:none;">
+        <h4>🌍 Regional AI Insights <span class="chip" style="margin-left:6px;">Intermediate</span></h4>
+        <div class="region-insight-box" id="regionInsightBox">
+          <h5 id="regionInsightTitle">📍 Loading regional data...</h5>
+          <ul id="regionInsightList"></ul>
+        </div>
+        <div class="region-insight-box" style="margin-top:10px;">
+          <h5 id="regionRightsTitle">⚖️ Rights & Licensing in Your Region</h5>
+          <ul id="regionRightsList"></ul>
+        </div>
+      </div>
+
+      <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="scrollTo('pricing')">🚀 Unlock Full AI Coaching — Upgrade Now</button>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-inner">
+    <p class="section-label">Choose Your Plan</p>
+    <h2 class="section-title">Invest in Your Sound</h2>
+    <p class="section-sub">Start free, upgrade when you're ready. Every plan includes unlimited AI feedback sessions.</p>
+    <div class="pricing-grid fade-in">
+
+      <!-- FREE -->
+      <div class="plan-card">
+        <div class="plan-badge free">FREE FOREVER</div>
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">$0<span>/mo</span></div>
+        <div class="plan-period">No credit card needed</div>
+        <hr class="plan-divider"/>
+        <ul class="plan-features">
+          <li><span class="check yes">✓</span> Upload MP3, WAV, video files</li>
+          <li><span class="check yes">✓</span> AI feedback on key areas</li>
+          <li><span class="check yes">✓</span> Score report (mix, arrangement, energy)</li>
+          <li><span class="check yes">✓</span> 3 track uploads per month</li>
+          <li><span class="check yes">✓</span> Basic loop recommendations</li>
+          <li><span class="check no">✗</span> Genre/audience/purpose context</li>
+          <li><span class="check no">✗</span> DAW integration</li>
+          <li><span class="check no">✗</span> Collab groups</li>
+        </ul>
+        <button class="plan-btn outline" onclick="showToast('🎵','You are already on the free plan — upload your first track!')">Current Plan</button>
+      </div>
+
+      <!-- BEGINNER COMBO -->
+      <div class="plan-card featured">
+        <div class="plan-badge beginner">BEGINNER COMBO</div>
+        <div class="plan-name">Beginner</div>
+        <div class="plan-price">$3<span>/mo</span></div>
+        <div class="plan-period">After free trial</div>
+        <div class="trial-badge">🎉 7-Day Free Trial Included</div>
+        <hr class="plan-divider"/>
+        <ul class="plan-features">
+          <li><span class="check yes">✓</span> Everything in Starter</li>
+          <li><span class="check yes">✓</span> <strong>Unlimited</strong> track uploads</li>
+          <li><span class="check yes">✓</span> Genre, audience & purpose context</li>
+          <li><span class="check yes">✓</span> AI knows your song's deeper meaning</li>
+          <li><span class="check yes">✓</span> Connect 1 music-making website (FL Studio, GarageBand, etc.)</li>
+          <li><span class="check yes">✓</span> AI knows your available loops & instruments</li>
+          <li><span class="check yes">✓</span> Personalized artist growth roadmap</li>
+          <li><span class="check yes">✓</span> 20+ specific loop recommendations</li>
+          <li><span class="check no">✗</span> Multiple app connections</li>
+          <li><span class="check no">✗</span> Copyright tools</li>
+          <li><span class="check no">✗</span> Collab groups</li>
+        </ul>
+        <button class="plan-btn grad" onclick="openModal('beginner')">Start 7-Day Free Trial</button>
+      </div>
+
+      <!-- INTERMEDIATE COMBO -->
+      <div class="plan-card">
+        <div class="plan-badge intermediate">INTERMEDIATE COMBO</div>
+        <div class="plan-name">Intermediate</div>
+        <div class="plan-price">$12<span>/mo</span></div>
+        <div class="plan-period">Billed monthly</div>
+        <div class="plan-region-row" id="planRegionRow">
+          <span class="prf" id="planRegionFlag">🌍</span>
+          <span>AI adapts to <strong id="planRegionName">your region</strong> — local platforms, trends &amp; rights included</span>
+        </div>
+        <hr class="plan-divider"/>
+        <ul class="plan-features">
+          <li><span class="check yes">✓</span> Everything in Beginner</li>
+          <li><span class="check yes">✓</span> Connect <strong>any</strong> music app (unlimited)</li>
+          <li><span class="check yes">✓</span> AI gets full toolkit background</li>
+          <li><span class="check yes">✓</span> <strong>Copyright registration</strong> guidance</li>
+          <li><span class="check yes">✓</span> Song fingerprinting & originality check</li>
+          <li><span class="check yes">✓</span> IP protection documentation export</li>
+          <li><span class="check yes">✓</span> Create collab groups (up to 5 artists)</li>
+          <li><span class="check yes">✓</span> Shared project feedback sessions</li>
+          <li><span class="check yes">✓</span> Version history & track comparison</li>
+          <li><span class="check yes" id="planRegionLi">✓</span> <span id="planRegionFeature">Region-aware AI insights for your local market</span></li>
+          <li><span class="check no">✗</span> Industry platform guidance</li>
+          <li><span class="check no">✗</span> Spotify/YouTube upload coaching</li>
+        </ul>
+        <button class="plan-btn grad" onclick="openModal('intermediate')">Upgrade to Intermediate</button>
+      </div>
+
+      <!-- MASTER COMBO -->
+      <div class="plan-card gold-plan">
+        <div class="plan-badge master">⭐ MASTER COMBO</div>
+        <div class="plan-name">Master</div>
+        <div class="plan-price" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">$18<span style="-webkit-text-fill-color:var(--muted)">/mo</span></div>
+        <div class="plan-period">Billed monthly</div>
+        <hr class="plan-divider"/>
+        <ul class="plan-features">
+          <li><span class="check yes">✓</span> Everything in Intermediate</li>
+          <li><span class="check yes">✓</span> <strong>Industry-Grade AI upgrade</strong></li>
+          <li><span class="check yes">✓</span> Deep knowledge: Spotify, Apple Music, SoundCloud, YouTube Music, SoundTrap, Bandcamp, TuneCore, DistroKid & more</li>
+          <li><span class="check yes">✓</span> Step-by-step: upload your song to Spotify</li>
+          <li><span class="check yes">✓</span> Pitch to playlist curators — AI drafts the pitch</li>
+          <li><span class="check yes">✓</span> Label A&R submission guide</li>
+          <li><span class="check yes">✓</span> Royalty & monetization strategy</li>
+          <li><span class="check yes">✓</span> Collab groups up to 15 artists</li>
+          <li><span class="check yes">✓</span> Priority AI analysis (faster results)</li>
+          <li><span class="check yes">✓</span> Dedicated artist success manager</li>
+        </ul>
+        <button class="plan-btn gold" onclick="openModal('master')">Go Master — $18/mo</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATIONS -->
+<section id="integrations" style="background:var(--bg2);">
+  <div class="section-inner">
+    <p class="section-label">Connect Your Tools</p>
+    <h2 class="section-title">Works With Your Workflow</h2>
+    <p class="section-sub">Connect the apps you already use so AI can give you hyper-specific feedback using your exact sounds and instruments.</p>
+    <div class="tabs-nav fade-in">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-daw')">🎛️ DAWs</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-sample')">🎵 Sample Packs</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-collab')">👥 Collab Apps</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-industry')">🌍 Industry Platforms</button>
+    </div>
+    <div id="tab-daw" class="tab-content active fade-in">
+      <div class="industry-grid">
+        <div class="industry-card" onclick="connectApp('FL Studio')"><div class="ind-icon">🎹</div><h4>FL Studio</h4><p>Connect your FL Studio projects — AI sees your mixer, patterns, and plugin chain.</p></div>
+        <div class="industry-card" onclick="connectApp('Ableton Live')"><div class="ind-icon">🟠</div><h4>Ableton Live</h4><p>Share your Live sets for AI to analyze arrangement view, clips, and device racks.</p></div>
+        <div class="industry-card" onclick="connectApp('GarageBand')"><div class="ind-icon">🎸</div><h4>GarageBand</h4><p>Connect iOS or Mac GarageBand projects including loops and smart instruments.</p></div>
+        <div class="industry-card" onclick="connectApp('Logic Pro')"><div class="ind-icon">🎻</div><h4>Logic Pro</h4><p>Full Logic Pro X integration — AI reads your software instruments and channel strips.</p></div>
+        <div class="industry-card" onclick="connectApp('Pro Tools')"><div class="ind-icon">🔊</div><h4>Pro Tools</h4><p>Professional-grade analysis for Pro Tools sessions — ideal for studio engineers.</p></div>
+        <div class="industry-card" onclick="connectApp('Studio One')"><div class="ind-icon">🎼</div><h4>Studio One</h4><p>PreSonus Studio One support with full plugin and sample library mapping.</p></div>
+        <div class="industry-card" onclick="connectApp('BeatStars')"><div class="ind-icon">⭐</div><h4>BeatStars</h4><p>Connect your BeatStars account so AI knows which beats you have available to buy or use.</p></div>
+        <div class="industry-card" onclick="connectApp('SoundTrap')"><div class="ind-icon">🌐</div><h4>SoundTrap</h4><p>Sync your online SoundTrap studio — AI analyzes your browser-based projects directly.</p></div>
+      </div>
+    </div>
+    <div id="tab-sample" class="tab-content fade-in">
+      <div class="industry-grid">
+        <div class="industry-card" onclick="connectApp('Splice')"><div class="ind-icon">🎲</div><h4>Splice</h4><p>Connect Splice so AI can recommend loops you actually own from the platform.</p></div>
+        <div class="industry-card" onclick="connectApp('Looperman')"><div class="ind-icon">🔁</div><h4>Looperman</h4><p>Browse free loops — AI matches your track's key/BPM to loops on Looperman.</p></div>
+        <div class="industry-card" onclick="connectApp('LANDR')"><div class="ind-icon">🧠</div><h4>LANDR</h4><p>Integrate LANDR samples and mastering chain into your AI analysis workflow.</p></div>
+        <div class="industry-card" onclick="connectApp('Loopmasters')"><div class="ind-icon">🎧</div><h4>Loopmasters</h4><p>AI cross-references your track with Loopmasters catalogues to find the best sample packs.</p></div>
+      </div>
+    </div>
+    <div id="tab-collab" class="tab-content fade-in">
+      <div class="collab-card">
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px;">👥 Your Collab Groups <span class="chip" style="margin-left:8px;">Intermediate+</span></h3>
+        <p style="color:var(--muted);font-size:.88rem;margin-bottom:20px;">Create a group, invite other artists, and combine your sounds. AI coaches the whole group together.</p>
+        <button class="btn-primary" style="margin-bottom:20px;" onclick="openModal('collab')">+ Create New Group</button>
+        <div style="background:var(--bg3);border-radius:14px;padding:20px;border:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div>
+              <h4 style="font-size:.92rem;font-weight:700;">🎵 The Nightcrawlers</h4>
+              <p style="font-size:.8rem;color:var(--muted);">R&B / Soul · 3 members · Created June 2025</p>
+            </div>
+            <span class="chip">Active</span>
+          </div>
+          <div class="collab-members">
+            <div class="member-avatar" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">J</div>
+            <div class="member-avatar" style="background:linear-gradient(135deg,#10b981,#34d399);">M</div>
+            <div class="member-avatar" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);">T</div>
+            <div class="member-avatar" style="background:var(--bg4);border:2px dashed var(--border);cursor:pointer;" onclick="showToast('📨','Invitation sent!')">+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-industry" class="tab-content fade-in">
+      <div class="industry-grid">
+        <div class="industry-card"><div class="ind-icon">🟢</div><h4>Spotify</h4><p>AI guides you through DistroKid/TuneCore upload, pitch to editorial, and Spotify for Artists setup.</p></div>
+        <div class="industry-card"><div class="ind-icon">🔴</div><h4>YouTube Music</h4><p>Optimize your YouTube Music presence, channel SEO, and Content ID monetization strategy.</p></div>
+        <div class="industry-card"><div class="ind-icon">🟠</div><h4>SoundCloud</h4><p>Upload strategy, SoundCloud Go+ monetization, fan repost campaigns, and tagging best practices.</p></div>
+        <div class="industry-card"><div class="ind-icon">🍎</div><h4>Apple Music</h4><p>Submit to Apple Music through aggregators, optimize metadata, and reach Apple editorial curators.</p></div>
+        <div class="industry-card"><div class="ind-icon">🌐</div><h4>SoundTrap</h4><p>Collaborate directly in SoundTrap — AI understands your session and gives in-context feedback.</p></div>
+        <div class="industry-card"><div class="ind-icon">🎵</div><h4>TikTok / Reels</h4><p>AI identifies the most hookable section of your track and suggests clip timing for TikTok virality.</p></div>
+        <div class="industry-card"><div class="ind-icon">🏷️</div><h4>Bandcamp</h4><p>Price, promote, and grow your Bandcamp following — AI builds your store description and pitch copy.</p></div>
+        <div class="industry-card"><div class="ind-icon">📦</div><h4>DistroKid / TuneCore</h4><p>Step-by-step release workflow including release dates, metadata standards, and ISRC registration.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COPYRIGHT -->
+<section id="copyright">
+  <div class="section-inner">
+    <p class="section-label">Protect Your Art</p>
+    <h2 class="section-title">Copyright & IP Protection</h2>
+    <p class="section-sub">Your music is your intellectual property. MusicAI gives you the tools and knowledge to protect it — from fingerprinting to official registration.</p>
+    <div class="copyright-form fade-in">
+      <div class="copyright-steps">
+        <div class="cp-step"><div class="step-num">01</div><h4>Upload & Fingerprint</h4><p>AI creates a unique audio fingerprint of your track to establish originality and timestamp of creation.</p></div>
+        <div class="cp-step"><div class="step-num">02</div><h4>Originality Check</h4><p>Cross-reference your track against 40M+ songs to ensure no accidental copyright conflicts before you release.</p></div>
+        <div class="cp-step"><div class="step-num">03</div><h4>Generate IP Docs</h4><p>AI generates a comprehensive song info sheet: contributors, BPM, key, creation date, and lyrics summary.</p></div>
+        <div class="cp-step"><div class="step-num">04</div><h4>Registration Guidance</h4><p>Step-by-step walkthrough for registering with ASCAP, BMI, SESAC, or the US Copyright Office online.</p></div>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;">
+        <button class="btn-primary" onclick="openModal('copyright')">🔐 Start Copyright Process <span class="chip" style="margin-left:6px;-webkit-text-fill-color:white;">Intermediate+</span></button>
+        <button class="btn-outline" onclick="showToast('📄','Generating your IP documentation...')">📄 Export IP Document</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INDUSTRY SECTION -->
+<section id="industry" style="background:var(--bg2);">
+  <div class="section-inner">
+    <p class="section-label">Go Pro</p>
+    <h2 class="section-title">Get Into the Music Industry</h2>
+    <p class="section-sub">The Master Plan AI has deep, up-to-date knowledge of every major music platform and guides you through each step of becoming a professional artist.</p>
+    <div class="features-grid fade-in">
+      <div class="feature-card">
+        <span class="feature-icon">🎙️</span>
+        <h3>Upload to Spotify — Step by Step</h3>
+        <p>Learn exactly how to get your music on Spotify using DistroKid or TuneCore, set your release date, and get your Spotify for Artists verified profile. AI writes your bio and pitch notes.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📋</span>
+        <h3>Playlist Pitching</h3>
+        <p>AI generates custom pitch emails for independent playlist curators, Spotify Editorial pitch forms, and YouTube channel submissions — tailored to your genre and song's story.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🏢</span>
+        <h3>Label A&R Submissions</h3>
+        <p>AI prepares your press kit, artist bio, and demo submission package. Learn which labels accept unsolicited demos and how to get your music in front of the right people.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💰</span>
+        <h3>Royalty & Revenue Strategy</h3>
+        <p>Understand streaming royalties, sync licensing, YouTube Content ID, and how to maximize income as an independent artist. AI creates a personalized revenue projection.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📱</span>
+        <h3>Social Media & TikTok Strategy</h3>
+        <p>AI identifies your most viral-worthy hook, suggests clip timestamps for TikTok/Reels, writes your caption, and builds a release-day social content plan.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🗺️</span>
+        <h3>Artist Roadmap</h3>
+        <p>A personalized, milestone-driven career roadmap from "bedroom producer" to "charting artist" — with monthly goals, release schedule, and collaboration recommendations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="footer-logo">MusicAI</div>
+        <p class="footer-desc">The AI-powered music coaching platform helping independent artists create, protect, and share their best work — from bedroom to Spotify.</p>
+        <div style="display:flex;gap:12px;">
+          <button class="btn-primary" style="padding:10px 22px;font-size:.88rem;" onclick="openModal('signup')">Get Started Free</button>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a onclick="scrollTo('features')">Features</a>
+        <a onclick="scrollTo('upload')">Upload Track</a>
+        <a onclick="scrollTo('pricing')">Pricing</a>
+        <a onclick="scrollTo('integrations')">Integrations</a>
+      </div>
+      <div class="footer-col">
+        <h4>Artists</h4>
+        <a onclick="scrollTo('industry')">Industry Guide</a>
+        <a onclick="scrollTo('copyright')">Copyright Tools</a>
+        <a>Success Stories</a>
+        <a>Blog</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a>About</a>
+        <a>Contact</a>
+        <a>Privacy Policy</a>
+        <a>Terms of Service</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 MusicAI. All rights reserved. Made for artists, by artists.</p>
+      <p style="color:var(--muted);font-size:.8rem;">Prices in USD. Cancel anytime.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✓</span>
+  <span id="toastMsg">Action completed.</span>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" style="position:relative;" id="modal-content">
+    <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ===== REGION DATA & GEOLOCATION =====
+const REGION_DB = {
+  // North America
+  US:{
+    flag:'🇺🇸', country:'United States', region:'North America',
+    insights:[
+      'The US market is dominated by Spotify, Apple Music & Amazon Music — prioritise getting on Spotify editorial playlists via Spotify for Artists pitch tool at least 7 days before release.',
+      'TikTok virality is the #1 discovery channel in 2024–25 US market — identify your catchiest 15-second hook and build a release strategy around it.',
+      'SoundCloud rap and hyperpop were born in the US underground — lean into SoundCloud for early fan-building before going major-platform.',
+      'Sync licensing (TV, ads, film) is a massive revenue stream in the US — ASCAP and BMI membership is essential, and sites like Musicbed and Artlist accept independent submissions.',
+      'Regional scenes matter — Atlanta trap, New York drill, LA R&B, and Houston screw all have dedicated tastemaker networks. Identify your regional scene and tap local blogs and radio first.'
+    ],
+    rights:[
+      'Join ASCAP, BMI, or SESAC to collect performance royalties from radio, streaming, and live performances.',
+      'Register your copyright with the US Copyright Office (copyright.gov) — registration within 3 months of publication maximises legal protections.',
+      'Mechanical royalties are collected via the MLC (Mechanical Licensing Collective) — register your songs at themlc.com.',
+      'SoundExchange collects digital performance royalties for non-interactive streaming (e.g. Pandora, SiriusXM) — register for free.'
+    ],
+    modalTips:[
+      '🇺🇸 US market: TikTok virality strategy tailored to your genre and BPM',
+      'Spotify editorial playlist pitch guidance optimised for US editorial curators',
+      'ASCAP / BMI / MLC registration walkthrough and royalty maximisation',
+      'Sync licensing opportunities for TV, ads, and film (Musicbed, Artlist, Epidemic Sound)'
+    ]
+  },
+  CA:{
+    flag:'🇨🇦', country:'Canada', region:'North America',
+    insights:[
+      'FACTOR (Foundation Assisting Canadian Talent on Recordings) provides grants up to $25,000 for independent Canadian artists — apply for the Artist Development program.',
+      'Canadian Content (CanCon) rules require broadcasters to play 35% Canadian music — this creates genuine playlist and radio opportunities not available in the US.',
+      'CBC Music and CBC Radio are major discovery platforms for Canadian artists — submit your music through CBC Music\'s open submission portal.',
+      'Canada\'s streaming market is heavily Spotify and Apple Music — but Bandcamp has a strong Canadian independent fanbase, especially for indie and folk genres.',
+      'Toronto, Montreal, and Vancouver each have distinct music ecosystems — target local music blogs (Exclaim!, The Line of Best Fit Canada editions) for initial coverage.'
+    ],
+    rights:[
+      'Join SOCAN (Society of Composers, Authors and Music Publishers of Canada) to collect Canadian performance royalties.',
+      'Re:Sound collects neighbouring rights royalties for performers and record labels — register separately from SOCAN.',
+      'CMRRA and SODRAC administer mechanical rights in Canada — register your compositions to collect mechanical royalties.',
+      'FACTOR and Canada Council for the Arts offer grants specifically for touring, recording, and export — apply early as application windows fill quickly.'
+    ],
+    modalTips:[
+      '🇨🇦 Canada: FACTOR grant application guidance for up to $25,000 in artist funding',
+      'CanCon (Canadian Content) radio strategy — maximise broadcaster play requirements',
+      'SOCAN + Re:Sound royalty registration walkthrough',
+      'CBC Music and Canadian blog submission strategy'
+    ]
+  },
+  GB:{
+    flag:'🇬🇧', country:'United Kingdom', region:'Europe',
+    insights:[
+      'BBC Radio 1 and BBC Radio 1Xtra are the most influential radio platforms for breaking UK artists — submit through the BBC Introducing portal for regional airplay that can lead to national exposure.',
+      'The UK Official Charts (OCC) still carry significant prestige and press coverage — a Top 40 entry drives playlist adds, press, and touring offers.',
+      'UK Drill and Grime originated here — if your sound intersects with these genres, tap the UK YouTube channel ecosystem (LinkUpTV, SBTV, GRM Daily) for millions of organic views.',
+      'MOBO Awards and the Mercury Prize are the most prominent UK industry award circuits — eligibility is key for press narratives and label attention.',
+      'Bandcamp Friday is particularly popular among UK independent fans — release on Bandcamp Fridays for higher revenue share and direct fan connection.'
+    ],
+    rights:[
+      'Join PRS for Music to collect performance and mechanical royalties across the UK and internationally through reciprocal agreements.',
+      'PPL (Phonographic Performance Limited) collects neighbouring rights for performers and labels — register separately from PRS.',
+      'The UK Intellectual Property Office (gov.uk/copyright) — while copyright is automatic in the UK, documenting creation dates is still recommended.',
+      'Music Declares Emergency and the BPI offer resources for independent UK artists navigating the industry.'
+    ],
+    modalTips:[
+      '🇬🇧 UK: BBC Introducing submission strategy for regional-to-national radio exposure',
+      'PRS for Music + PPL registration and royalty maximisation',
+      'UK Drill/Grime YouTube channel outreach (LinkUpTV, SBTV, GRM Daily)',
+      'Official UK Charts (OCC) strategy and Mercury Prize eligibility guidance'
+    ]
+  },
+  NG:{
+    flag:'🇳🇬', country:'Nigeria', region:'Africa',
+    insights:[
+      'Afrobeats is the fastest-growing genre globally in 2024–25 — your Nigerian sound has genuine international crossover potential into the UK, US, and Europe. Lean into this.',
+      'Audiomack and Boomplay are the dominant streaming platforms in Nigeria and across West Africa — prioritise these alongside Spotify for maximum regional reach.',
+      'TurnTable Charts (formerly Turntable) is the official Nigerian music chart — chart placement drives radio rotation on Beats FM, Cool FM, and Wazobia FM.',
+      'YouTube is the #1 music discovery platform in Nigeria — invest in high-quality music video production and consistently upload content for the algorithm.',
+      'International collaborations with UK and US artists have been the proven path for Nigerian artists to break globally (Burna Boy, Wizkid, Davido model) — identify your strategic collab targets.'
+    ],
+    rights:[
+      'Register with COSON (Copyright Society of Nigeria) to collect performance royalties for radio, streaming, and events in Nigeria.',
+      'The Nigerian Copyright Commission (NCC) administers copyright law — automatic protection exists but registration provides evidentiary benefits.',
+      'MCSN (Musical Copyright Society Nigeria) and PMAN (Performing Musicians Association of Nigeria) are key industry bodies to join for networking and advocacy.',
+      'International royalty collection: if your music is played globally, join a collecting society affiliated with CISAC for cross-border royalty collection.'
+    ],
+    modalTips:[
+      '🇳🇬 Nigeria: Audiomack & Boomplay strategy for West African streaming dominance',
+      'COSON royalty registration and TurnTable Chart submission guidance',
+      'YouTube music video strategy for Nigerian algorithm and discovery',
+      'International crossover roadmap — UK/US collab targeting strategy'
+    ]
+  },
+  GH:{
+    flag:'🇬🇭', country:'Ghana', region:'Africa',
+    insights:[
+      'Ghana is a major hub for Afrobeats and Highlife — your sound sits at a culturally rich crossroads with strong international appeal, especially to UK and US diaspora audiences.',
+      'Audiomack and Boomplay are the primary streaming platforms — supplement with Spotify and Apple Music for diaspora listeners in Europe and North America.',
+      'Ghana Music Awards and 3Music Awards are the most prominent local award circuits — nominations generate significant press and radio rotation.',
+      'Ghanaian artists have strong collab networks with Nigerian, UK, and US artists — strategic features can exponentially expand your reach.',
+      'Radio is still a primary discovery channel in Ghana — approach Citi FM, Joy FM, and YFM A&R contacts directly with your press kit.'
+    ],
+    rights:[
+      'Join GHAMRO (Ghana Music Rights Organisation) to collect performance royalties in Ghana.',
+      'The Copyright Office of Ghana (under GIPC) administers copyright — documentation of creation is advised.',
+      'MUSIGA (Musicians Union of Ghana) provides artist advocacy, legal resources, and industry networking.'
+    ],
+    modalTips:[
+      '🇬🇭 Ghana: Audiomack & Boomplay regional strategy + diaspora Spotify targeting',
+      'Ghana Music Awards submission and 3Music Awards eligibility guidance',
+      'GHAMRO royalty registration walkthrough',
+      'Ghanaian radio (Citi FM, Joy FM) outreach strategy'
+    ]
+  },
+  ZA:{
+    flag:'🇿🇦', country:'South Africa', region:'Africa',
+    insights:[
+      'Amapiano is South Africa\'s most powerful musical export right now — even if your genre differs, understanding how Amapiano conquered global streaming charts is a masterclass in organic growth.',
+      'Apple Music has invested heavily in South African editorial — their Africa Now and Amapiano playlists are achievable targets for independent artists.',
+      'South Africa has a highly active live music circuit — Joburg, Cape Town, and Durban venues are key for building a fanbase before going national.',
+      'Trace Music (pan-African TV) and Channel O are still key video distribution platforms for reaching audiences across Southern and Eastern Africa.',
+      'South African hip-hop (SA Hip Hop) has built a dedicated streaming and YouTube audience — tap established SA Hip Hop YouTube channels for exposure.'
+    ],
+    rights:[
+      'Join SAMRO (South African Music Rights Organisation) to collect performance royalties for live, broadcast, and streaming in SA.',
+      'NORM (Needletime) collects neighbouring rights for performers — register separately from SAMRO.',
+      'RISA (Recording Industry of South Africa) represents record labels and advocates for the industry — useful for networking and resources.',
+      'The Companies and Intellectual Property Commission (CIPC) handles copyright registration in South Africa.'
+    ],
+    modalTips:[
+      '🇿🇦 South Africa: Apple Music Africa Now playlist pitch strategy',
+      'SAMRO + NORM royalty registration and neighbouring rights guidance',
+      'Amapiano and SA Hip Hop channel outreach on YouTube and Trace Music',
+      'Live circuit roadmap: Joburg → Cape Town → national touring strategy'
+    ]
+  },
+  KR:{
+    flag:'🇰🇷', country:'South Korea', region:'Asia',
+    insights:[
+      'The K-Pop industry machine is globally dominant — Melon, Genie, Flo, and Vibe are the dominant South Korean streaming platforms and all influence the Gaon Chart, the official Korean music chart.',
+      'Fan engagement (fandom culture) is more critical in South Korea than almost anywhere else — fan cafes, Weverse, and Bubble membership apps drive loyalty and purchase behaviour.',
+      'HYBE, SM Entertainment, YG Entertainment, and JYP are the Big 4 labels — but independent K-indie (Korean indie) on platforms like SoundCloud and Bandcamp is a growing alternative scene.',
+      'YouTube music videos in Korea are production-heavy and choreography-driven — even for non-pop genres, high visual production values are expected by Korean audiences.',
+      'Gaon Chart certification (Gold, Platinum) is a major marketing milestone — it requires submitting sales data through your distributor.'
+    ],
+    rights:[
+      'Join KOMCA (Korean Music Copyright Association) to collect performance and mechanical royalties in South Korea.',
+      'KRPIA (Korea Recording Industry Association) represents labels and collects neighbouring rights — important for streaming royalties.',
+      'The Korean Copyright Act provides strong protections — the Korea Copyright Commission (kcc.go.kr) is the regulatory body.'
+    ],
+    modalTips:[
+      '🇰🇷 South Korea: Melon, Genie & Gaon Chart submission and optimisation strategy',
+      'KOMCA royalty registration and neighbouring rights via KRPIA',
+      'K-indie scene strategy — SoundCloud + Weverse fan engagement roadmap',
+      'Gaon Chart Gold/Platinum certification pathway'
+    ]
+  },
+  IN:{
+    flag:'🇮🇳', country:'India', region:'Asia',
+    insights:[
+      'India is one of the world\'s largest and fastest-growing music markets — JioSaavn, Gaana, Wynk Music, and Resso are the dominant local platforms alongside Spotify India.',
+      'Bollywood film placement remains the single most powerful springboard for mainstream recognition in India — pursuing sync opportunities with film composers and music directors is a high-value strategy.',
+      'India\'s independent (Indie) music scene is booming — platforms like Bandlab, Stageit, and YouTube are the primary spaces. Channels like OML (Only Much Louder) actively support independent artists.',
+      'Regional music markets (Punjabi, Tamil, Telugu, Bengali, Kannada) are each massive and distinct — identify which regional market aligns with your language and style.',
+      'T-Series, Sony Music India, and Zee Music Company dominate — but independent distribution via DistroKid or TuneCore can put your music on JioSaavn and Gaana immediately.'
+    ],
+    rights:[
+      'Join IPRS (Indian Performing Right Society) to collect performance royalties for broadcasts and live performances in India.',
+      'PPL India (Phonographic Performance Limited India) collects neighbouring rights for performers and producers.',
+      'The Copyright Act 1957 (amended 2012) governs music rights in India — the Copyright Office (copyright.gov.in) handles registrations.',
+      'Royalties from Bollywood usage are governed by separate synchronisation licence agreements — a music lawyer is strongly advised for sync deals.'
+    ],
+    modalTips:[
+      '🇮🇳 India: JioSaavn, Gaana & Wynk Music distribution and playlist pitch strategy',
+      'IPRS + PPL India royalty registration walkthrough',
+      'Bollywood sync licensing opportunity identification and outreach',
+      'Regional market strategy — Punjabi / Tamil / Telugu audience targeting'
+    ]
+  },
+  JP:{
+    flag:'🇯🇵', country:'Japan', region:'Asia',
+    insights:[
+      'Japan is the second-largest recorded music market in the world — LINE Music, AWA, Rakuten Music, and Apple Music Japan are the key platforms alongside Spotify Japan.',
+      'Physical sales still account for a significant portion of Japanese music revenue — CD bundles with fan goods (handshake events, photobooks) remain a powerful fan monetisation model.',
+      'The Oricon Chart is the gold standard for tracking Japanese music popularity — chart performance is still widely reported in Japanese press.',
+      'City Pop and J-R&B have surged in global popularity via YouTube algorithm discovery — if your sound has those influences, there is active international interest.',
+      'Anime tie-ins (opening/ending themes) are among the most powerful discovery mechanisms in Japan — even independent artists can pursue indie anime and web comic tie-ins.'
+    ],
+    rights:[
+      'Join JASRAC (Japanese Society for Rights of Authors, Composers and Publishers) or NexTone for performance and mechanical royalty collection in Japan.',
+      'RIAJ (Recording Industry Association of Japan) represents labels and advocates for anti-piracy and streaming rights.',
+      'Japanese copyright law provides strong automatic protections — the Agency for Cultural Affairs (bunka.go.jp) oversees copyright policy.'
+    ],
+    modalTips:[
+      '🇯🇵 Japan: LINE Music, AWA & Oricon Chart strategy for Japanese market entry',
+      'JASRAC / NexTone royalty registration guidance',
+      'City Pop / J-R&B international viral strategy via YouTube algorithm',
+      'Anime tie-in and web media sync licensing pathway'
+    ]
+  },
+  BR:{
+    flag:'🇧🇷', country:'Brazil', region:'Latin America',
+    insights:[
+      'Brazil is Spotify\'s largest market in Latin America — Spotify Brazil has dedicated editorial playlists like Funk Hits, Pagode Hits, and Sertanejo Hits. Pitch to these at least 7 days before release.',
+      'Funk carioca and baile funk originated in Rio de Janeiro and now influence global electronic and pop — if your sound has funk elements, lean into the Brazilian connection.',
+      'Deezer has a stronger market presence in Brazil than almost anywhere else in the world — do not overlook Deezer editorial submissions.',
+      'Brazilian radio (Jovem Pan, Rádio Bandeirantes) is still a significant discovery channel, especially for sertanejo and forró.',
+      'YouTube Brasil is massive — Brazilian audiences consume enormous amounts of music on YouTube. High-quality lyric videos and shorts are essential.'
+    ],
+    rights:[
+      'Join ECAD (Escritório Central de Arrecadação e Distribuição) — the central body for performance royalty collection in Brazil for all live, broadcast, and streaming.',
+      'UBC, ABRAMUS, and other affiliated societies work under ECAD — your distributor can advise on the best affiliation.',
+      'Brazilian copyright is governed by Lei de Direitos Autorais (Law 9.610/98) — the Biblioteca Nacional manages voluntary registration.',
+      'Mechanical royalties in Brazil are complex — consult a Brazilian music lawyer for sync and mechanical licensing deals.'
+    ],
+    modalTips:[
+      '🇧🇷 Brazil: Spotify Brazil + Deezer editorial playlist pitch strategy',
+      'ECAD royalty registration and performance rights collection walkthrough',
+      'Funk / Baile Funk international crossover positioning strategy',
+      'YouTube Brasil lyric video and Shorts strategy for organic discovery'
+    ]
+  },
+  AU:{
+    flag:'🇦🇺', country:'Australia', region:'Oceania',
+    insights:[
+      'Triple J Unearthed is the most important independent artist platform in Australia — upload your tracks for consideration for Triple J airplay, which can catapult an unknown artist to national attention overnight.',
+      'The ARIA Charts are Australia\'s official music charts — chart eligibility requires ARIA-affiliated distribution through services like DistroKid or AWAL.',
+      'APRA AMCOS administers both performance and mechanical rights in Australia (unlike most countries where they are separate) — one membership covers both.',
+      'Australia has strong government arts funding through Creative Australia (formerly Australia Council for the Arts) — music grants are available for touring, recording, and export.',
+      'The Australian live circuit (Melbourne, Sydney, Brisbane, Perth) is extremely active — strong live reputation often precedes streaming success for Australian artists.'
+    ],
+    rights:[
+      'Join APRA AMCOS to collect both performance and mechanical royalties in Australia and New Zealand — a single membership covers both right types.',
+      'PPCA (Phonographic Performance Company of Australia) collects neighbouring rights for performers and producers from broadcast and streaming.',
+      'The Australian Copyright Act 1968 governs music rights — copyright is automatic, but timestamps and documentation are advisable.',
+      'Apply for Creative Australia grants for recording, touring, and market development funding.'
+    ],
+    modalTips:[
+      '🇦🇺 Australia: Triple J Unearthed submission strategy and ARIA Chart eligibility',
+      'APRA AMCOS single-membership setup for performance + mechanical royalties',
+      'Creative Australia government grant application guidance',
+      'Australian live circuit roadmap: Melbourne → Sydney → national touring'
+    ]
+  },
+  DE:{
+    flag:'🇩🇪', country:'Germany', region:'Europe',
+    insights:[
+      'Germany is the largest music market in Europe — Spotify Germany, Apple Music, and Amazon Music DE are the primary streaming platforms, with GEMA affiliated to all.',
+      'The GfK Entertainment Chart (now Offizielle Deutsche Charts) is the official German chart — chart performance drives radio rotation on national stations like SWR3, ANTENNE BAYERN, and NDR.',
+      'German Hip-Hop (Deutschrap) is the dominant genre domestically — artists like Capital Bra and Ufo361 have shown that non-English rap can top European charts.',
+      'Reeperbahn Festival in Hamburg is Europe\'s largest club festival and conference — an invaluable networking event for independent artists looking to break the European market.',
+      'Spotify\'s European editorial team is based in Stockholm but curates German playlists — pitch in German AND English for maximum consideration.'
+    ],
+    rights:[
+      'Join GEMA (Gesellschaft für musikalische Aufführungs- und mechanische Vervielfältigungsrechte) — it collects both performance and mechanical rights in Germany and is mandatory for any artist seeking German royalties.',
+      'GVL (Gesellschaft zur Verwertung von Leistungsschutzrechten) collects neighbouring rights for performers and producers.',
+      'GEMA membership is compulsory once your music is commercially distributed in Germany — failure to register means royalties go uncollected.',
+      'German copyright law (Urheberrechtsgesetz) provides strong moral rights protections for creators.'
+    ],
+    modalTips:[
+      '🇩🇪 Germany: GEMA compulsory registration guidance and royalty collection setup',
+      'Offizielle Deutsche Charts submission and German radio (SWR3, NDR) pitch strategy',
+      'Reeperbahn Festival and European market networking roadmap',
+      'Deutschrap scene strategy and Spotify Germany editorial playlist targeting'
+    ]
+  },
+  FR:{
+    flag:'🇫🇷', country:'France', region:'Europe',
+    insights:[
+      'France has strict cultural quotas requiring radio stations to play at least 35% French-language music — if you produce music in French, this creates genuine airplay opportunities.',
+      'Deezer was founded in Paris and has a stronger market share in France than Spotify — prioritise Deezer editorial submissions for French market penetration.',
+      'The Victoires de la Musique is France\'s most prestigious music award — nominations are decided by industry professionals and carry significant mainstream press weight.',
+      'MIDEM and Paris\'s Pitchfork Music Festival are key European industry events for networking and international deal-making.',
+      'French hip-hop (PNL, Freeze Corleone style) has a massive domestic audience — if your sound intersects, tap French rap YouTube channels and blogs (Booska-P, Rap Genius France).'
+    ],
+    rights:[
+      'Join SACEM (Société des auteurs, compositeurs et éditeurs de musique) — it collects performance and mechanical royalties in France and manages reciprocal international agreements.',
+      'SCPP and SPPF collect neighbouring rights for producers — choose based on whether you are a major or independent label.',
+      'ADAMI (Société civile pour l\'Administration des Droits des Artistes et Musiciens Interprètes) collects neighbouring rights for performers.',
+      'SORECOP and COPIE FRANCE administer private copy levies on recording media — relevant for physical product revenue.'
+    ],
+    modalTips:[
+      '🇫🇷 France: Deezer editorial pitch strategy + French radio quota opportunities',
+      'SACEM royalty registration and international reciprocal agreements setup',
+      'Victoires de la Musique eligibility and MIDEM industry networking guidance',
+      'French hip-hop / PNL-style blog and YouTube channel outreach strategy'
+    ]
+  }
+};
+
+// Default fallback for countries not in DB
+function buildFallbackRegion(country, flag, region){
+  return {
+    flag, country, region,
+    insights:[
+      `The ${region} music market is evolving rapidly — Spotify and Apple Music editorial playlists are accessible globally regardless of your country. Submit your music 7+ days before release for editorial consideration.`,
+      'YouTube is the #1 music discovery platform in most markets globally — invest in a high-quality music video or lyric video and target the algorithm with consistent uploads.',
+      'Audiomack, Deezer, and Boomplay have strong regional market presence in many territories — do not limit your distribution to Spotify and Apple Music alone.',
+      'Identify the dominant music social media platform in your market — TikTok, Instagram Reels, and YouTube Shorts all serve different regional demographics.',
+      `Building a local fanbase in ${country} before pursuing international markets gives you a credible story to tell press, labels, and playlist curators.`
+    ],
+    rights:[
+      'Check if your country is a member of CISAC (International Confederation of Societies of Authors and Composers) — if so, your local collecting society has reciprocal agreements for international royalty collection.',
+      'Copyright protection is automatic in most countries that are signatories of the Berne Convention — document your creation dates with timestamped files.',
+      'Register with your local performing rights organisation (PRO) to collect royalties when your music is broadcast or streamed in your country.',
+      'For international releases, use an aggregator (DistroKid, TuneCore, CD Baby) that covers all major global platforms simultaneously.'
+    ],
+    modalTips:[
+      `${flag} ${country}: Spotify & Apple Music editorial playlist pitch strategy for your region`,
+      'Local collecting society royalty registration and CISAC international reciprocal setup',
+      'YouTube and TikTok regional algorithm strategy for organic discovery',
+      'Multi-platform distribution strategy tailored to your regional market'
+    ]
+  };
+}
+
+let userRegionData = null;
+
+async function detectRegion(){
+  try{
+    const res = await fetch('https://ipapi.co/json/',{signal:AbortSignal.timeout(5000)});
+    const data = await res.json();
+    const code = data.country_code || 'US';
+    const countryName = data.country_name || 'your country';
+    const continentCode = data.continent_code || 'NA';
+    const continentMap = {
+      'EU':'Europe','NA':'North America','SA':'Latin America',
+      'AF':'Africa','AS':'Asia','OC':'Oceania','AN':'Antarctica'
+    };
+    const regionName = continentMap[continentCode] || 'Global';
+
+    // Find flag emoji from country code
+    const flagEmoji = code.toUpperCase().split('').map(c=>String.fromCodePoint(0x1F1E6-65+c.charCodeAt(0))).join('');
+
+    const rd = REGION_DB[code] || buildFallbackRegion(countryName, flagEmoji, regionName);
+    window.userRegionData = rd;
+    userRegionData = rd;
+
+    applyRegionToUI(rd);
+  } catch(e){
+    // Silently fall back — don't break the page
+    const rd = buildFallbackRegion('your country','🌍','Global');
+    window.userRegionData = rd;
+    userRegionData = rd;
+    applyRegionToUI(rd);
+  }
+}
+
+function applyRegionToUI(rd){
+  // Nav pill
+  document.getElementById('navFlag').textContent = rd.flag;
+  document.getElementById('navRegionText').textContent = rd.country;
+
+  // Region banner
+  document.getElementById('bannerFlag').textContent = rd.flag;
+  document.getElementById('bannerRegionName').textContent = rd.country;
+  document.getElementById('bannerChip').textContent = `${rd.region} · Intermediate AI`;
+  setTimeout(()=>document.getElementById('regionBanner').classList.add('show'), 1200);
+  setTimeout(()=>document.getElementById('regionBanner').classList.remove('show'), 7000);
+
+  // Intermediate plan card region row
+  document.getElementById('planRegionFlag').textContent = rd.flag;
+  document.getElementById('planRegionName').textContent = rd.country;
+  document.getElementById('planRegionFeature').textContent =
+    `${rd.flag} ${rd.country}-specific platform, trend & rights AI`;
+
+  // Feedback panel region section
+  document.getElementById('regionInsightTitle').textContent =
+    `${rd.flag} ${rd.country} — Music Market Insights (${rd.region})`;
+  const list = document.getElementById('regionInsightList');
+  list.innerHTML = rd.insights.map(i=>`<li>${i}</li>`).join('');
+
+  document.getElementById('regionRightsTitle').textContent =
+    `⚖️ Rights & Royalties in ${rd.country}`;
+  const rList = document.getElementById('regionRightsList');
+  rList.innerHTML = rd.rights.map(r=>`<li>${r}</li>`).join('');
+}
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  detectRegion();
+});
+
+// ===== CAPTCHA LOGIC =====
+let rcDone = false;
+
+function rcClick(){
+  if(rcDone) return;
+  const box = document.getElementById('rcBox');
+  const spinner = document.getElementById('rcSpinner');
+  const checkWrap = document.querySelector('.rc-check-wrap');
+
+  // Hide checkbox, show spinner (simulates reCAPTCHA risk analysis)
+  checkWrap.style.display = 'none';
+  spinner.style.display = 'block';
+
+  // After ~1.4 s "analysis" completes → show verified state
+  setTimeout(() => {
+    spinner.style.display = 'none';
+    checkWrap.style.display = 'flex';
+    box.classList.add('checked');
+    rcDone = true;
+
+    // Small delay then show green overlay on the widget
+    setTimeout(() => {
+      document.getElementById('rcSuccessOverlay').classList.add('show');
+      // Show the enter button below
+      setTimeout(() => {
+        document.getElementById('capEnterBtn').classList.add('show');
+      }, 350);
+    }, 200);
+  }, 1400);
+}
+
+function enterSite(){
+  document.getElementById('captcha-screen').classList.add('hide');
+}
+// ===== END CAPTCHA =====
+
+// SCROLL
+function scrollTo(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+
+// TOAST
+let toastTimer;
+function showToast(icon,msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastIcon').textContent=icon;
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// MODAL
+const modals={
+  signup:{
+    title:'Create Your Free Account',
+    sub:'Start uploading tracks and getting AI feedback in under 60 seconds.',
+    body:`<div class="form-grid" style="grid-template-columns:1fr;gap:14px;">
+      <div class="form-group"><label>Artist Name</label><input type="text" placeholder="Your name or stage name"/></div>
+      <div class="form-group"><label>Email</label><input type="email" placeholder="your@email.com"/></div>
+      <div class="form-group"><label>Password</label><input type="password" placeholder="Create a strong password"/></div>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:20px;" onclick="showToast('🎉','Account created! Welcome to MusicAI!');closeModalDirect();">Create Free Account</button>
+    <p style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:12px;">Already have an account? <a style="color:var(--accent3);cursor:pointer;">Sign in</a></p>`
+  },
+  beginner:{
+    title:'Start Your 7-Day Free Trial',
+    sub:'Beginner Combo — $3/month after trial. Cancel anytime.',
+    body:`<div class="trial-badge" style="margin-bottom:16px;">🎉 7 Days Free — No Charge Today</div>
+    <div class="form-grid" style="grid-template-columns:1fr;gap:14px;">
+      <div class="form-group"><label>Email</label><input type="email" placeholder="your@email.com"/></div>
+      <div class="form-group"><label>Card Number</label><input type="text" placeholder="•••• •••• •••• ••••"/></div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px;margin:0;">
+        <div class="form-group"><label>Expiry</label><input type="text" placeholder="MM/YY"/></div>
+        <div class="form-group"><label>CVV</label><input type="text" placeholder="•••"/></div>
+      </div>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:20px;" onclick="showToast('🎉','Trial started! 7 days free — enjoy Beginner Combo!');closeModalDirect();">Start Free Trial</button>
+    <p style="text-align:center;color:var(--muted);font-size:.78rem;margin-top:10px;">You won't be charged until your trial ends. Cancel anytime.</p>`
+  },
+  intermediate:{
+    title:'Upgrade to Intermediate',
+    sub:'Connect unlimited apps, protect your copyright, and collab with other artists — $12/month.',
+    get body(){
+      const rd = window.userRegionData || {};
+      const flag = rd.flag || '🌍';
+      const regionName = rd.country || 'your region';
+      const tips = rd.modalTips || ['Region-aware AI insights tailored to your local music market','Local platform recommendations and trending genre tips','Regional rights organisations and licensing guidance'];
+      const tipsHTML = tips.map(t=>`<li style="display:flex;gap:10px;align-items:flex-start;font-size:.85rem;line-height:1.5;"><span style="color:#60a5fa;flex-shrink:0;">▸</span>${t}</li>`).join('');
+      return `<div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:12px;padding:14px 16px;margin-bottom:18px;">
+        <p style="font-size:.82rem;font-weight:700;color:#60a5fa;margin-bottom:8px;">${flag} Regional AI active for: <strong style="color:#f1f0ff;">${regionName}</strong></p>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">${tipsHTML}</ul>
+      </div>
+      <ul style="list-style:none;margin-bottom:20px;display:flex;flex-direction:column;gap:8px;">
+        <li style="display:flex;gap:10px;align-items:center;font-size:.88rem;"><span style="color:var(--green);">✓</span> Connect any music app — unlimited</li>
+        <li style="display:flex;gap:10px;align-items:center;font-size:.88rem;"><span style="color:var(--green);">✓</span> Copyright registration &amp; fingerprinting</li>
+        <li style="display:flex;gap:10px;align-items:center;font-size:.88rem;"><span style="color:var(--green);">✓</span> Create collab groups with other artists</li>
+        <li style="display:flex;gap:10px;align-items:center;font-size:.88rem;"><span style="color:var(--green);">✓</span> All Beginner features included</li>
+      </ul>
+      <div class="form-grid" style="grid-template-columns:1fr;gap:14px;">
+        <div class="form-group"><label>Email</label><input type="email" placeholder="your@email.com"/></div>
+        <div class="form-group"><label>Card Number</label><input type="text" placeholder="•••• •••• •••• ••••"/></div>
+      </div>
+      <button class="btn-primary" style="width:100%;margin-top:20px;" onclick="showToast('🚀','Welcome to Intermediate! Regional AI is now active for ${regionName}.');closeModalDirect();">Upgrade — $12/mo</button>`;
+    }
+  },
+  master:{
+    title:'Go Master — $18/month',
+    sub:'Unlock the full power of MusicAI with industry-grade AI and official music platform guidance.',
+    body:`<ul style="list-style:none;margin-bottom:20px;display:flex;flex-direction:column;gap:8px;">
+      <li style="display:flex;gap:10px;align-items:center;font-size:.88rem;"><span style="color:var(--gold2);">★</span> Industry AI: Spotify, Apple Music, SoundCloud, YouTube Music, SoundTrap knowledge</li>
+      <li style="display:flex;gap:10px;align-items:center;font-size:.88rem;"><span style="color:var(--gold2);">★</span> Playlist pitch & A&R submission packages</li>
+      <li style="display:flex;gap:10px;align-items:center;font-size:.88rem;"><span style="color:var(--gold2);">★</span> Step-by-step Spotify/Apple Music upload</li>
+      <li style="display:flex;gap:10px;align-items:center;font-size:.88rem;"><span style="color:var(--gold2);">★</span> Royalty & revenue strategy</li>
+      <li style="display:flex;gap:10px;align-items:center;font-size:.88sm;"><span style="color:var(--gold2);">★</span> Everything in Intermediate + priority support</li>
+    </ul>
+    <div class="form-group" style="margin-bottom:14px;"><label>Email</label><input type="email" placeholder="your@email.com"/></div>
+    <div class="form-group" style="margin-bottom:14px;"><label>Card Number</label><input type="text" placeholder="•••• •••• •••• ••••"/></div>
+    <button class="plan-btn gold" style="width:100%;margin-top:8px;padding:14px;" onclick="showToast('⭐','Welcome to Master! Industry AI is now active.');closeModalDirect();">Upgrade to Master — $18/mo</button>`
+  },
+  collab:{
+    title:'Create a Collab Group',
+    sub:'Invite other artists and build music together with shared AI coaching.',
+    body:`<div class="form-grid" style="grid-template-columns:1fr;gap:14px;">
+      <div class="form-group"><label>Group Name</label><input type="text" placeholder="e.g. The Nightcrawlers"/></div>
+      <div class="form-group"><label>Genre Focus</label><select><option>Hip-Hop / Trap</option><option>R&B / Soul</option><option>Pop</option><option>Electronic</option><option>Mixed</option></select></div>
+      <div class="form-group"><label>Invite Members (emails)</label><textarea placeholder="artist1@email.com, artist2@email.com..."></textarea></div>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:20px;" onclick="showToast('👥','Group created! Invites sent to your collaborators.');closeModalDirect();">Create Group & Send Invites</button>
+    <p style="text-align:center;color:var(--muted);font-size:.78rem;margin-top:10px;">Requires Intermediate plan or above.</p>`
+  },
+  copyright:{
+    title:'Start Copyright Protection',
+    sub:'Fingerprint your track and generate your IP documentation.',
+    body:`<div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:12px;padding:16px;margin-bottom:20px;">
+      <p style="color:var(--green);font-size:.88rem;font-weight:600;">🔐 Your track will be fingerprinted and timestamped immediately upon starting this process.</p>
+    </div>
+    <div class="form-grid" style="grid-template-columns:1fr;gap:14px;">
+      <div class="form-group"><label>Song Title</label><input type="text" placeholder="Official song title"/></div>
+      <div class="form-group"><label>Contributors (all writers/producers)</label><textarea placeholder="Your Name (50%), Collaborator Name (50%)..."></textarea></div>
+      <div class="form-group"><label>Performing Rights Organization</label><select><option>ASCAP</option><option>BMI</option><option>SESAC</option><option>SOCAN (Canada)</option><option>PRS (UK)</option><option>Not yet registered</option></select></div>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:20px;" onclick="showToast('🔐','Fingerprinting complete! IP document generated.');closeModalDirect();">Start Copyright Process</button>`
+  }
+};
+
+function openModal(key){
+  const m=modals[key]||modals.signup;
+  document.getElementById('modal-body').innerHTML=`<h2>${m.title}</h2><p class="sub">${m.sub}</p>${m.body}`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(e){if(e.target===document.getElementById('modal-overlay'))closeModalDirect();}
+function closeModalDirect(){document.getElementById('modal-overlay').classList.remove('open');}
+
+// TABS
+function switchTab(btn,tabId){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// TAGS
+function addTag(e){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const input=document.getElementById('moodInput');
+    const val=input.value.trim();
+    if(!val)return;
+    const wrap=document.getElementById('moodTagWrap');
+    const tag=document.createElement('div');
+    tag.className='tag';
+    tag.innerHTML=`${val}<span onclick="this.parentElement.remove()">✕</span>`;
+    wrap.insertBefore(tag,input);
+    input.value='';
+  }
+}
+
+// CONNECT APP
+function connectApp(name){
+  showToast('🔗',`Connecting ${name}... This requires Beginner plan or above.`);
+}
+
+// FILE UPLOAD
+function handleDrag(e){e.preventDefault();document.getElementById('uploadArea').classList.add('drag');}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('drag');
+  const files=e.dataTransfer.files;
+  if(files.length>0)processFile(files[0]);
+}
+function handleFile(e){if(e.target.files.length>0)processFile(e.target.files[0]);}
+
+function processFile(file){
+  document.getElementById('fileName').textContent=file.name;
+  // update analysis sub-text with region
+  if(userRegionData){
+    document.getElementById('analysisRegionSub').textContent =
+      `Cross-referencing genre benchmarks + ${userRegionData.flag} ${userRegionData.country} regional market data...`;
+  }
+  const ap=document.getElementById('analysisPanel');
+  const fp=document.getElementById('feedbackPanel');
+  fp.classList.remove('visible');
+  ap.classList.add('visible');
+  ap.scrollIntoView({behavior:'smooth',block:'center'});
+
+  const icons=['icon0','icon1','icon2','icon3'];
+  const progress=document.getElementById('analysisProgress');
+  const durations=[1200,1400,1600,2000];
+  let step=0;
+
+  function nextStep(){
+    if(step>0){
+      document.getElementById(icons[step-1]).className='step-icon done';
+      document.getElementById(icons[step-1]).textContent='✓';
+    }
+    if(step<icons.length){
+      document.getElementById(icons[step]).className='step-icon active';
+      const pct=(step+1)/icons.length*100;
+      progress.style.width=pct+'%';
+      step++;
+      setTimeout(nextStep,durations[step-1]||1500);
+    } else {
+      progress.style.width='100%';
+      setTimeout(()=>{
+        ap.classList.remove('visible');
+        fp.classList.add('visible');
+        // Show region insights section once feedback loads
+        document.getElementById('regionInsightSection').style.display='block';
+        fp.scrollIntoView({behavior:'smooth',block:'start'});
+        const rn = userRegionData ? userRegionData.country : 'your region';
+        showToast('✅',`AI analysis complete! Regional insights for ${rn} included.`);
+      },600);
+    }
+  }
+  nextStep();
+}
+
+// SCROLL ANIMATIONS
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+},{threshold:.1});
+document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>
