@@ -7,6 +7,9 @@
 <title>MusicAI — Your AI Music Coach</title>
 <style>
   /* ===== CAPTCHA SCREEN ===== */
+  html{
+    scroll-behavior:smooth;
+}
   #captcha-screen{
     position:fixed;inset:0;z-index:9999;
     background:#0a0a0f;
@@ -573,13 +576,12 @@
       <circle cx="22" cy="19" r="3" fill="url(#lg)"/>
     </svg>
     MusicAI
-  </div>
   <div class="nav-links">
-    <a onclick="scrollTo('features')">Features</a>
-    <a onclick="scrollTo('upload')">Upload</a>
-    <a onclick="scrollTo('pricing')">Pricing</a>
-    <a onclick="scrollTo('industry')">Industry</a>
-  </div>
+    <a href="#features" onclick="scrollTo('features'); return false;">Features</a>
+    <a href="#upload" onclick="scrollTo('upload'); return false;">Upload</a>
+    <a href="#pricing" onclick="scrollTo('pricing'); return false;">Pricing</a>
+    <a href="#industry" onclick="scrollTo('industry'); return false;">Industry</a>
+</div>
   <div style="display:flex;align-items:center;gap:12px;">
     <div class="region-pill" id="navRegionPill" title="Your detected region">
       <span class="region-flag" id="navFlag">🌍</span>
@@ -1141,7 +1143,7 @@
         <a onclick="scrollTo('features')">Features</a>
         <a onclick="scrollTo('upload')">Upload Track</a>
         <a onclick="scrollTo('pricing')">Pricing</a>
-        <a onclick="scrollTo('integrations')">Integrations</a>
+        <a onclick="scrollTo('industry')">Industry</a>
       </div>
       <div class="footer-col">
         <h4>Artists</h4>
